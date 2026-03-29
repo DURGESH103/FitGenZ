@@ -1,0 +1,26 @@
+self.addEventListener('push', (event) => {
+  if (!event.data) return
+  const data = event.data.json()
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'FitGenZ', {
+      body:    data.body  || '',
+      icon:    '/favicon.svg',
+      badge:   '/favicon.svg',
+      tag:     data.tag   || 'fitgenz',
+      data:    { url: data.url || '/' },
+      vibrate: [200, 100, 200],
+    })
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url || '/'
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      const existing = list.find((c) => c.url.includes(url) && 'focus' in c)
+      if (existing) return existing.focus()
+      return clients.openWindow(url)
+    })
+  )
+})
