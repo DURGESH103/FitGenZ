@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../utils/api'
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState([])
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [unreadCount,   setUnreadCount]   = useState(0)
+  const fetchedRef = useRef(false) // prevent StrictMode double-fetch
 
   const fetch = useCallback(async () => {
     try {
@@ -22,17 +23,21 @@ export function useNotifications() {
   const requestPush = useCallback(async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return
     try {
-      const reg = await navigator.serviceWorker.ready
+      const reg      = await navigator.serviceWorker.ready
       const existing = await reg.pushManager.getSubscription()
-      const sub = existing || await reg.pushManager.subscribe({
-        userVisibleOnly: true,
+      const sub      = existing || await reg.pushManager.subscribe({
+        userVisibleOnly:      true,
         applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
       })
       await api.post('/notifications/push', { subscription: sub.toJSON() })
     } catch { /* push not supported or denied */ }
   }, [])
 
-  useEffect(() => { fetch() }, [fetch])
+  useEffect(() => {
+    if (fetchedRef.current) return
+    fetchedRef.current = true
+    fetch()
+  }, [fetch])
 
   return { notifications, unreadCount, fetch, markAllRead, requestPush }
 }
