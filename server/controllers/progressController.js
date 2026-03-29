@@ -1,37 +1,49 @@
-const Progress = require("../models/Progress");
+const Progress     = require("../models/Progress");
 const asyncHandler = require("../utils/asyncHandler");
 const { trackEvent } = require("../services/analyticsService");
-const { awardXP } = require("../services/gamificationService");
+const { awardXP }    = require("../services/gamificationService");
 const { emitToUser } = require("../config/socket");
+const EVENTS         = require("../config/events");
 const { getPagination } = require("../utils/pagination");
 
 const createProgressEntry = asyncHandler(async (req, res) => {
   const entry = await Progress.create({
-    user: req.user._id,
-    weight: req.body.weight,
+    user:    req.user._id,
+    weight:  req.body.weight,
     bodyFat: req.body.bodyFat,
-    date: req.body.date || new Date(),
+    date:    req.body.date || new Date(),
   });
 
   await trackEvent({
-    user: req.user._id,
+    user:      req.user._id,
     eventType: "user_activity",
-    metadata: { action: "progress_logged", weight: req.body.weight },
+    metadata:  { action: "progress_logged", weight: req.body.weight },
   });
 
   const xpResult = await awardXP(req.user._id, "progress_logged");
+  const uid      = req.user._id.toString();
 
-  emitToUser(req.user._id.toString(), "progress:new", {
+  // Named event: PROGRESS_ADDED
+  emitToUser(uid, EVENTS.PROGRESS_ADDED, {
     entry,
-    xpGain: xpResult?.xpGain,
-    xp: xpResult?.stats?.xp,
-    level: xpResult?.stats?.level,
+    xpGain:   xpResult?.xpGain,
+    xp:       xpResult?.stats?.xp,
+    weeklyXP: xpResult?.stats?.weeklyXP,
+    level:    xpResult?.stats?.level,
+  });
+
+  // Named event: XP_GAINED
+  emitToUser(uid, EVENTS.XP_GAINED, {
+    xpGain:   xpResult?.xpGain,
+    xp:       xpResult?.stats?.xp,
+    weeklyXP: xpResult?.stats?.weeklyXP,
+    source:   "progress_logged",
   });
 
   return res.status(201).json({
-    message: "Progress entry created",
+    message:  "Progress entry created",
     progress: entry,
-    xpGain: xpResult?.xpGain,
+    xpGain:   xpResult?.xpGain,
   });
 });
 

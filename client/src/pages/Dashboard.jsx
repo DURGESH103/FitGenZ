@@ -6,6 +6,8 @@ import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { ChartSkeleton } from '../components/Skeleton'
 import { useConfetti } from '../hooks/useConfetti'
+import DailyReward from '../components/DailyReward'
+import AIInsights from '../components/AIInsights'
 import { Flame, Trophy, CheckCircle2, Circle, Target, Zap, TrendingUp, Calendar } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
@@ -165,6 +167,8 @@ export default function Dashboard() {
   const [goalProgress,   setGoalProgress]   = useState(0)
   const [prediction,     setPrediction]     = useState(null)
   const [badges,         setBadges]         = useState([])
+  const [canClaimReward, setCanClaimReward] = useState(false)
+  const [streakFreezes,  setStreakFreezes]  = useState(0)
   const [loadingTasks,   setLoadingTasks]   = useState(true)
   const [loadingProgress,setLoadingProgress]= useState(true)
 
@@ -194,6 +198,8 @@ export default function Dashboard() {
       setLevelInfo(statsRes.data.levelInfo)
       setStreak(statsRes.data.stats.streak)
       setBadges(statsRes.data.stats.badges || [])
+      setCanClaimReward(statsRes.data.canClaimReward)
+      setStreakFreezes(statsRes.data.streakFreezes ?? 0)
       setAnalytics(analyticsRes.data.events || [])
       setGoalProgress(predRes.data.goalProgress || 0)
       setPrediction(predRes.data.prediction)
@@ -272,6 +278,21 @@ export default function Dashboard() {
             <p className="font-bold text-white capitalize text-sm truncate">{value}</p>
           </motion.div>
         ))}
+      </div>
+
+      {/* Daily Reward + AI Insights */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+          <DailyReward
+            canClaim={canClaimReward}
+            streakFreezes={streakFreezes}
+            streak={streak}
+            onClaimed={() => setCanClaimReward(false)}
+          />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
+          <AIInsights />
+        </motion.div>
       </div>
 
       {/* Heatmap + Goal side by side on md+ */}

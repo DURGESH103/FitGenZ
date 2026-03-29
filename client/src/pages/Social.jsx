@@ -1,25 +1,25 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
-import { useSocket } from '../context/SocketContext'
+import { useSocket, EVENTS } from '../context/SocketContext'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
-import { Heart, MessageCircle, Send, Plus, X, Users } from 'lucide-react'
+import { Heart, MessageCircle, Send, Plus, X, Users, UserPlus, UserCheck } from 'lucide-react'
 import { ListSkeleton } from '../components/Skeleton'
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000)
-  if (s < 60)   return `${s}s ago`
-  if (s < 3600) return `${Math.floor(s/60)}m ago`
-  if (s < 86400)return `${Math.floor(s/3600)}h ago`
-  return `${Math.floor(s/86400)}d ago`
+  if (s < 60)    return `${s}s ago`
+  if (s < 3600)  return `${Math.floor(s / 60)}m ago`
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`
+  return `${Math.floor(s / 86400)}d ago`
 }
 
-function PostCard({ post, onLike, onComment }) {
-  const { user }   = useAuth()
+function PostCard({ post, onLike, onComment, onFollow, myId }) {
   const [showComments, setShowComments] = useState(false)
-  const [commentText, setCommentText]   = useState('')
-  const [submitting, setSubmitting]     = useState(false)
+  const [commentText,  setCommentText]  = useState('')
+  const [submitting,   setSubmitting]   = useState(false)
+  const isOwn = (post.user?._id || post.user?.id) === myId
 
   const handleComment = async (e) => {
     e.preventDefault()
@@ -28,16 +28,14 @@ function PostCard({ post, onLike, onComment }) {
     try {
       await onComment(post._id, commentText.trim())
       setCommentText('')
-    } finally {
-      setSubmitting(false)
-    }
+    } finally { setSubmitting(false) }
   }
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
       className="glass rounded-2xl overflow-hidden border border-purple-500/10">
 
-      {/* Post header */}
+      {/* Header */}
       <div className="flex items-center gap-3 p-4 pb-3">
         <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shrink-0 text-sm font-black text-white">
           {post.user?.name?.[0]?.toUpperCase() || '?'}
@@ -53,15 +51,24 @@ function PostCard({ post, onLike, onComment }) {
             #{post.tags[0]}
           </span>
         )}
+        {!isOwn && (
+          <motion.button whileTap={{ scale: 0.9 }}
+            onClick={() => onFollow(post.user?._id || post.user?.id)}
+            className={`p-1.5 rounded-lg transition-colors ${
+              post.isFollowing
+                ? 'bg-purple-500/20 text-purple-400'
+                : 'bg-white/8 text-slate-500 hover:text-purple-400 hover:bg-purple-500/15'
+            }`}>
+            {post.isFollowing ? <UserCheck size={13} /> : <UserPlus size={13} />}
+          </motion.button>
+        )}
       </div>
 
-      {/* Post text */}
+      {/* Text */}
       <p className="px-4 pb-3 text-sm text-slate-200 leading-relaxed">{post.text}</p>
 
       {/* Image */}
-      {post.imageUrl && (
-        <img src={post.imageUrl} alt="post" className="w-full max-h-64 object-cover" />
-      )}
+      {post.imageUrl && <img src={post.imageUrl} alt="post" className="w-full max-h-64 object-cover" />}
 
       {/* Actions */}
       <div className="flex items-center gap-4 px-4 py-3 border-t border-white/6">
@@ -72,7 +79,6 @@ function PostCard({ post, onLike, onComment }) {
           <Heart size={16} fill={post.likedByMe ? 'currentColor' : 'none'} />
           <span>{post.likeCount}</span>
         </motion.button>
-
         <button onClick={() => setShowComments((v) => !v)}
           className="flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-purple-400 transition-colors">
           <MessageCircle size={16} />
@@ -121,26 +127,29 @@ function PostCard({ post, onLike, onComment }) {
 export default function Social() {
   const { user }   = useAuth()
   const { socket } = useSocket()
+  const [tab,      setTab]      = useState('all')
   const [posts,    setPosts]    = useState([])
   const [loading,  setLoading]  = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [text,     setText]     = useState('')
   const [posting,  setPosting]  = useState(false)
 
-  const fetchFeed = useCallback(async () => {
+  const fetchFeed = useCallback(async (feedTab) => {
+    setLoading(true)
     try {
-      const { data } = await api.get('/social/feed')
+      const url = feedTab === 'following' ? '/social/feed/following' : '/social/feed'
+      const { data } = await api.get(url)
       setPosts(data.posts)
     } catch { toast.error('Could not load feed') }
     finally { setLoading(false) }
   }, [])
 
-  useEffect(() => { fetchFeed() }, [fetchFeed])
+  useEffect(() => { fetchFeed(tab) }, [tab, fetchFeed])
 
   // Real-time socket events
   useEffect(() => {
     if (!socket) return
-    const onNewPost = (post) => setPosts((p) => [post, ...p])
+    const onNewPost = (post) => { if (tab === 'all') setPosts((p) => [post, ...p]) }
     const onLike    = ({ postId, likeCount }) =>
       setPosts((p) => p.map((x) => x._id === postId ? { ...x, likeCount } : x))
     const onComment = ({ postId, comment, commentCount }) =>
@@ -148,15 +157,15 @@ export default function Social() {
         ? { ...x, comments: [...(x.comments || []), comment], commentCount }
         : x))
 
-    socket.on('feed:new_post',     onNewPost)
-    socket.on('feed:like_update',  onLike)
-    socket.on('feed:comment_added',onComment)
+    socket.on(EVENTS.FEED_NEW_POST, onNewPost)
+    socket.on(EVENTS.FEED_LIKE,     onLike)
+    socket.on(EVENTS.FEED_COMMENT,  onComment)
     return () => {
-      socket.off('feed:new_post',     onNewPost)
-      socket.off('feed:like_update',  onLike)
-      socket.off('feed:comment_added',onComment)
+      socket.off(EVENTS.FEED_NEW_POST, onNewPost)
+      socket.off(EVENTS.FEED_LIKE,     onLike)
+      socket.off(EVENTS.FEED_COMMENT,  onComment)
     }
-  }, [socket])
+  }, [socket, tab])
 
   const handlePost = async (e) => {
     e.preventDefault()
@@ -168,9 +177,7 @@ export default function Social() {
       setShowForm(false)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to post')
-    } finally {
-      setPosting(false)
-    }
+    } finally { setPosting(false) }
   }
 
   const handleLike = async (postId) => {
@@ -186,9 +193,22 @@ export default function Social() {
     }
   }
 
-  const handleComment = async (postId, text) => {
-    await api.post(`/social/post/${postId}/comment`, { text })
+  const handleComment = async (postId, txt) => {
+    await api.post(`/social/post/${postId}/comment`, { text: txt })
   }
+
+  const handleFollow = async (userId) => {
+    try {
+      const { data } = await api.post(`/social/follow/${userId}`)
+      setPosts((p) => p.map((x) =>
+        (x.user?._id === userId || x.user?.id === userId)
+          ? { ...x, isFollowing: data.following }
+          : x
+      ))
+    } catch { /* silent */ }
+  }
+
+  const myId = user?._id || user?.id
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-4 pb-24 md:pb-8">
@@ -207,6 +227,18 @@ export default function Social() {
           {showForm ? 'Cancel' : 'Post'}
         </motion.button>
       </motion.div>
+
+      {/* Feed tabs */}
+      <div className="flex gap-2">
+        {[['all', '🌍 All'], ['following', '👥 Following']].map(([t, label]) => (
+          <button key={t} onClick={() => setTab(t)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              tab === t
+                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
+                : 'glass text-slate-400 border border-purple-500/20 hover:text-slate-200'
+            }`}>{label}</button>
+        ))}
+      </div>
 
       {/* Create post form */}
       <AnimatePresence>
@@ -234,13 +266,18 @@ export default function Social() {
       {loading ? <ListSkeleton rows={4} /> : posts.length === 0 ? (
         <div className="glass rounded-2xl p-14 text-center">
           <Users size={44} className="text-slate-700 mx-auto mb-3" />
-          <p className="text-slate-400 font-medium">No posts yet</p>
-          <p className="text-slate-600 text-sm mt-1">Be the first to share your journey!</p>
+          <p className="text-slate-400 font-medium">
+            {tab === 'following' ? 'Follow people to see their posts here' : 'No posts yet'}
+          </p>
+          <p className="text-slate-600 text-sm mt-1">
+            {tab === 'following' ? 'Discover athletes in the All tab' : 'Be the first to share your journey!'}
+          </p>
         </div>
       ) : (
         <div className="space-y-4">
           {posts.map((post) => (
-            <PostCard key={post._id} post={post} onLike={handleLike} onComment={handleComment} />
+            <PostCard key={post._id} post={post} myId={myId}
+              onLike={handleLike} onComment={handleComment} onFollow={handleFollow} />
           ))}
         </div>
       )}

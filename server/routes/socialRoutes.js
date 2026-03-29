@@ -2,11 +2,15 @@ const express = require("express");
 const { body } = require("express-validator");
 const { protect } = require("../middleware/authMiddleware");
 const validateRequest = require("../middleware/validateRequest");
-const { getFeed, createPost, toggleLike, addComment } = require("../controllers/socialController");
+const {
+  getFeed, getFollowingFeed, createPost,
+  toggleLike, addComment, toggleFollow, getFollowCounts,
+} = require("../controllers/socialController");
 
 const router = express.Router();
 
-router.get("/feed", protect, getFeed);
+router.get("/feed",          protect, getFeed);
+router.get("/feed/following", protect, getFollowingFeed);
 
 router.post(
   "/post",
@@ -19,7 +23,7 @@ router.post(
   createPost
 );
 
-router.patch("/post/:postId/like",    protect, toggleLike);
+router.patch("/post/:postId/like", protect, toggleLike);
 
 router.post(
   "/post/:postId/comment",
@@ -28,5 +32,9 @@ router.post(
   validateRequest,
   addComment
 );
+
+router.post("/follow/:userId",   protect, toggleFollow);
+router.get("/follow/counts",     protect, getFollowCounts);
+router.get("/follow/:userId/counts", protect, getFollowCounts);
 
 module.exports = router;

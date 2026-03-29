@@ -1,15 +1,14 @@
-const Task = require("../models/Task");
+const Task     = require("../models/Task");
 const asyncHandler = require("../utils/asyncHandler");
-const { trackEvent } = require("../services/analyticsService");
+const { trackEvent }           = require("../services/analyticsService");
 const { awardXP, updateStreak } = require("../services/gamificationService");
-const { emitToUser } = require("../config/socket");
-const { getPagination } = require("../utils/pagination");
+const { emitToUser }           = require("../config/socket");
+const EVENTS                   = require("../config/events");
+const { getPagination }        = require("../utils/pagination");
 
 const getTodayRange = () => {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
+  const start = new Date(); start.setHours(0, 0, 0, 0);
+  const end   = new Date(); end.setHours(23, 59, 59, 999);
   return { start, end };
 };
 
@@ -22,31 +21,19 @@ const defaultTitles = [
 const getDailyTasks = asyncHandler(async (req, res) => {
   const { start, end } = getTodayRange();
   const { page, limit, skip } = getPagination(req.query, 10, 50);
-  let tasks = await Task.find({
-    user: req.user._id,
-    date: { $gte: start, $lte: end },
-  })
-    .sort({ createdAt: 1 })
-    .skip(skip)
-    .limit(limit);
+  let tasks = await Task.find({ user: req.user._id, date: { $gte: start, $lte: end } })
+    .sort({ createdAt: 1 }).skip(skip).limit(limit);
 
   if (tasks.length === 0) {
-    const today = new Date(start);
     try {
       tasks = await Task.insertMany(
-        defaultTitles.map((title) => ({
-          user: req.user._id,
-          title,
-          completed: false,
-          date: today,
-        })),
+        defaultTitles.map((title) => ({ user: req.user._id, title, completed: false, date: new Date(start) })),
         { ordered: false }
       );
     } catch (err) {
       if (err.code !== 11000) throw err;
       tasks = await Task.find({ user: req.user._id, date: { $gte: start, $lte: end } })
-        .sort({ createdAt: 1 })
-        .limit(limit);
+        .sort({ createdAt: 1 }).limit(limit);
     }
   }
 
@@ -62,40 +49,59 @@ const markTaskComplete = asyncHandler(async (req, res) => {
   await task.save();
 
   if (task.completed && !wasCompleted) {
-    // Track analytics
     await trackEvent({
       user: req.user._id,
       eventType: "workout_completion",
       metadata: { taskId: task._id.toString(), title: task.title },
     });
 
-    // Update streak
-    const streak = await updateStreak(req.user._id);
+    const { streak, usedFreeze } = await updateStreak(req.user._id);
 
-    // Check if all tasks done today
     const { start, end } = getTodayRange();
     const allTasks = await Task.find({ user: req.user._id, date: { $gte: start, $lte: end } });
-    const allDone  = allTasks.every((t) => t._id.equals(task._id) ? true : t.completed);
+    const allDone  = allTasks.every((t) => (t._id.equals(task._id) ? true : t.completed));
 
-    // Award XP
-    const xpResult = await awardXP(req.user._id, "task_complete", { incrementTasks: true });
-    let bonusXP = null;
-    if (allDone) {
-      bonusXP = await awardXP(req.user._id, "all_tasks_done");
-    }
+    const xpResult  = await awardXP(req.user._id, "task_complete", { incrementTasks: true });
+    const bonusXP   = allDone ? await awardXP(req.user._id, "all_tasks_done") : null;
+    const uid       = req.user._id.toString();
+    const totalXP   = (xpResult?.xpGain || 0) + (bonusXP?.xpGain || 0);
+    const finalStats = bonusXP?.stats || xpResult?.stats;
 
-    // Emit real-time update to user
-    emitToUser(req.user._id.toString(), "stats:update", {
-      streak,
-      xp: xpResult?.stats?.xp,
-      level: xpResult?.stats?.level,
-      levelTitle: xpResult?.stats?.levelTitle,
-      xpGain: (xpResult?.xpGain || 0) + (bonusXP?.xpGain || 0),
-      leveledUp: xpResult?.leveledUp || bonusXP?.leveledUp,
-      newBadges: [...(xpResult?.newBadges || []), ...(bonusXP?.newBadges || [])],
+    // Named event: TASK_COMPLETED
+    emitToUser(uid, EVENTS.TASK_COMPLETED, { task, streak, usedFreeze });
+
+    // Named event: XP_GAINED
+    emitToUser(uid, EVENTS.XP_GAINED, {
+      xpGain:    totalXP,
+      xp:        finalStats?.xp,
+      weeklyXP:  finalStats?.weeklyXP,
+      source:    allDone ? "all_tasks_done" : "task_complete",
     });
 
-    emitToUser(req.user._id.toString(), "task:updated", { task, streak });
+    // Named event: STREAK_UPDATED
+    emitToUser(uid, EVENTS.STREAK_UPDATED, { streak, usedFreeze });
+
+    // Named event: LEVEL_UP (only if leveled up)
+    if (xpResult?.leveledUp || bonusXP?.leveledUp) {
+      emitToUser(uid, EVENTS.LEVEL_UP, {
+        level:      finalStats?.level,
+        levelTitle: finalStats?.levelTitle,
+      });
+    }
+
+    // Aggregate STATS_UPDATE for dashboard sync
+    emitToUser(uid, EVENTS.STATS_UPDATE, {
+      streak,
+      xp:         finalStats?.xp,
+      weeklyXP:   finalStats?.weeklyXP,
+      level:      finalStats?.level,
+      levelTitle: finalStats?.levelTitle,
+      xpGain:     totalXP,
+      leveledUp:  xpResult?.leveledUp || bonusXP?.leveledUp,
+      newBadges:  [...(xpResult?.newBadges || []), ...(bonusXP?.newBadges || [])],
+    });
+
+    if (allDone) emitToUser(uid, EVENTS.TASKS_ALL_DONE, { streak });
   }
 
   return res.status(200).json({ message: "Task updated", task });
