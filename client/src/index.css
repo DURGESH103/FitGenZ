@@ -10,35 +10,61 @@
 
 * { box-sizing: border-box; }
 
+/* ── Dark theme (default) ─────────────────────────────────────────────────── */
+:root, [data-theme="dark"] {
+  --bg:        #0f0f1a;
+  --bg-card:   rgba(26, 26, 46, 0.7);
+  --text:      #f1f5f9;
+  --text-muted:#94a3b8;
+  --border:    rgba(168, 85, 247, 0.15);
+  --shimmer-a: #1a1a2e;
+  --shimmer-b: #2a2a4e;
+  --scrollbar-track: #0f0f1a;
+}
+
+/* ── Light theme ──────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:        #f8f7ff;
+  --bg-card:   rgba(255, 255, 255, 0.75);
+  --text:      #1e1b4b;
+  --text-muted:#6b7280;
+  --border:    rgba(168, 85, 247, 0.25);
+  --shimmer-a: #e9e7f5;
+  --shimmer-b: #d4d0f0;
+  --scrollbar-track: #f8f7ff;
+}
+
 body {
-  background-color: #0f0f1a;
-  color: #f1f5f9;
+  background-color: var(--bg);
+  color: var(--text);
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Shimmer animation for skeletons */
 @keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
 }
 
 .shimmer {
-  background: linear-gradient(90deg, #1a1a2e 25%, #2a2a4e 50%, #1a1a2e 75%);
+  background: linear-gradient(90deg, var(--shimmer-a) 25%, var(--shimmer-b) 50%, var(--shimmer-a) 75%);
   background-size: 400px 100%;
   animation: shimmer 1.4s ease infinite;
 }
 
 /* Glassmorphism card */
 .glass {
-  background: rgba(26, 26, 46, 0.7);
+  background: var(--bg-card);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(168, 85, 247, 0.15);
+  border: 1px solid var(--border);
+  transition: background 0.3s ease;
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: #0f0f1a; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
 ::-webkit-scrollbar-thumb { background: #a855f7; border-radius: 2px; }
 
 /* Safe area for mobile bottom nav */

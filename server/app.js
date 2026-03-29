@@ -13,6 +13,7 @@ const aiRoutes = require("./routes/aiRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const gamificationRoutes = require("./routes/gamificationRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const socialRoutes        = require("./routes/socialRoutes");
 const { apiLimiter, authLimiter } = require("./middleware/rateLimitMiddleware");
 const { cacheByQuery } = require("./middleware/cacheMiddleware");
 const requestLogger = require("./middleware/requestLogger");
@@ -58,6 +59,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/analytics",     analyticsRoutes);
 app.use("/api/gamification",  gamificationRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/social",        socialRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

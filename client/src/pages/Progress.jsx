@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
+import { useSocket } from '../context/SocketContext'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { ChartSkeleton } from '../components/Skeleton'
@@ -22,6 +23,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function Progress() {
   const { user } = useAuth()
+  const { socket } = useSocket()
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [form, setForm] = useState({ weight: '', bodyFat: '' })
@@ -40,6 +42,21 @@ export default function Progress() {
   }, [])
 
   useEffect(() => { fetchHistory() }, [fetchHistory])
+
+  // Live chart update when progress:new fires
+  useEffect(() => {
+    if (!socket) return
+    const handler = (data) => {
+      if (data?.entry) {
+        setHistory((prev) => {
+          const updated = [...prev, data.entry].sort((a, b) => new Date(a.date) - new Date(b.date))
+          return updated
+        })
+      }
+    }
+    socket.on('progress:new', handler)
+    return () => socket.off('progress:new', handler)
+  }, [socket])
 
   const handleLog = async (e) => {
     e.preventDefault()

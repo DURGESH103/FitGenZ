@@ -1,22 +1,25 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Dumbbell, Salad, TrendingUp, Bot, LogOut, Crown } from 'lucide-react'
+import { LayoutDashboard, Dumbbell, Salad, TrendingUp, Bot, LogOut, Crown, Users, Sun, Moon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
+import { useTheme } from '../context/ThemeContext'
 import { motion } from 'framer-motion'
 import NotificationBell from './NotificationBell'
 
 const links = [
-  { to: '/dashboard',   icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/workout',     icon: Dumbbell,        label: 'Workout'   },
-  { to: '/diet',        icon: Salad,           label: 'Diet'      },
-  { to: '/progress',    icon: TrendingUp,      label: 'Progress'  },
-  { to: '/ai',          icon: Bot,             label: 'AI Coach'  },
-  { to: '/leaderboard', icon: Crown,           label: 'Leaderboard'},
+  { to: '/dashboard',   icon: LayoutDashboard, label: 'Dashboard'   },
+  { to: '/workout',     icon: Dumbbell,        label: 'Workout'     },
+  { to: '/diet',        icon: Salad,           label: 'Diet'        },
+  { to: '/progress',    icon: TrendingUp,      label: 'Progress'    },
+  { to: '/ai',          icon: Bot,             label: 'AI Coach'    },
+  { to: '/leaderboard', icon: Crown,           label: 'Leaderboard' },
+  { to: '/social',      icon: Users,           label: 'Community'   },
 ]
 
 export default function Sidebar() {
   const { logout } = useAuth()
   const { connected } = useSocket()
+  const { theme, toggle } = useTheme()
   const navigate = useNavigate()
 
   const handleLogout = async () => { await logout(); navigate('/login') }
@@ -30,6 +33,9 @@ export default function Sidebar() {
         <div className="flex items-center gap-2">
           <span title={connected ? 'Live' : 'Offline'}
             className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400 animate-pulse' : 'bg-slate-600'}`} />
+          <button onClick={toggle} className="p-1.5 rounded-lg hover:bg-white/8 text-slate-400 hover:text-slate-200 transition-colors">
+            {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+          </button>
           <NotificationBell />
         </div>
       </div>

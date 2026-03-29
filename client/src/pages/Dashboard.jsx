@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { ChartSkeleton } from '../components/Skeleton'
+import { useConfetti } from '../hooks/useConfetti'
 import { Flame, Trophy, CheckCircle2, Circle, Target, Zap, TrendingUp, Calendar } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
@@ -153,6 +154,8 @@ function GoalCard({ goalProgress, prediction }) {
 export default function Dashboard() {
   const { user } = useAuth()
   const { liveStats } = useSocket()
+  const { fireFromElement } = useConfetti()
+  const taskBtnRefs = useRef({})
 
   const [tasks,          setTasks]          = useState([])
   const [progress,       setProgress]       = useState([])
@@ -203,21 +206,25 @@ export default function Dashboard() {
     fetchStats()
   }, [fetchTasks, fetchProgress, fetchStats])
 
-  // Apply real-time socket updates
+  // Apply real-time socket updates — also refresh progress chart on progress:new
   useEffect(() => {
     if (!liveStats) return
     if (liveStats.streak  !== undefined) setStreak(liveStats.streak)
     if (liveStats.xp      !== undefined && levelInfo) {
       setLevelInfo((prev) => prev ? { ...prev, xp: liveStats.xp, level: liveStats.level } : prev)
     }
-  }, [liveStats])
+    if (liveStats._progressNew) fetchProgress()
+  }, [liveStats, levelInfo, fetchProgress])
 
-  const toggleTask = async (task) => {
+  const toggleTask = async (task, e) => {
     const prev = tasks
     setTasks((t) => t.map((x) => (x._id === task._id ? { ...x, completed: !x.completed } : x)))
     try {
       await api.patch(`/task/${task._id}/complete`, { completed: !task.completed })
-      if (!task.completed) toast.success('Task completed! 🎉')
+      if (!task.completed) {
+        toast.success('Task completed! 🎉')
+        fireFromElement(taskBtnRefs.current[task._id])
+      }
     } catch {
       setTasks(prev)
       toast.error('Failed to update task')
@@ -300,7 +307,8 @@ export default function Dashboard() {
         ) : (
           <div className="space-y-1.5">
             {tasks.map((task, i) => (
-              <motion.button key={task._id} onClick={() => toggleTask(task)}
+              <motion.button key={task._id} onClick={(e) => toggleTask(task, e)}
+                ref={(el) => { taskBtnRefs.current[task._id] = el }}
                 initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
                 whileTap={{ scale: 0.98 }}
                 className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">

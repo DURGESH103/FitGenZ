@@ -59,7 +59,7 @@ export function SocketProvider({ children }) {
     })
 
     socket.on('progress:new', (data) => {
-      setLiveStats((prev) => ({ ...prev, xp: data.xp, level: data.level }))
+      setLiveStats((prev) => ({ ...prev, xp: data.xp, level: data.level, _progressNew: Date.now() }))
       if (data.xpGain) showXPToast(data.xpGain, false, [])
     })
 
