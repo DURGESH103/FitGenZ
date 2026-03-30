@@ -1,18 +1,18 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Sidebar from './Sidebar'
-import BottomNav from './BottomNav'
+import MobileHeader from './MobileHeader'
 
 export default function ProtectedLayout() {
   const { user } = useAuth()
   if (!user) return <Navigate to="/login" replace />
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-x-hidden">
       <Sidebar />
-      <main className="flex-1 md:ml-60 pb-safe">
+      <MobileHeader />
+      <main className="flex-1 md:ml-60 pt-16 md:pt-0 overflow-visible">
         <Outlet />
       </main>
-      <BottomNav />
     </div>
   )
 }

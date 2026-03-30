@@ -128,7 +128,7 @@ export default function Profile() {
   const { user: userData, fitness, stats, levelInfo, goalProgress, completion, recommendations } = profile
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 pb-24 md:pb-8">
+    <div className="p-3 sm:p-4 md:p-8 max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-safe">
       
       {/* Header */}
       <motion.div 
@@ -137,8 +137,8 @@ export default function Profile() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-3xl font-black text-white">Profile</h1>
-          <p className="text-slate-400 text-sm mt-1">Manage your account and preferences</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-white">Profile</h1>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1">Manage your account and preferences</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="text-right">

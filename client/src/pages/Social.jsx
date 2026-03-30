@@ -318,19 +318,19 @@ export default function Social() {
   const myId = user?._id || user?.id
 
   return (
-    <div className="p-4 md:p-8 max-w-2xl mx-auto space-y-4 pb-24 md:pb-8">
+    <div className="p-3 sm:p-4 md:p-8 max-w-2xl mx-auto space-y-3 sm:space-y-4 pb-safe">
 
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black text-white flex items-center gap-2">
-            <Users size={22} className="text-purple-400" /> Community
+          <h1 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+            <Users size={18} sm:size={22} className="text-purple-400" /> Community
           </h1>
-          <p className="text-slate-400 text-sm mt-1">Share your fitness journey</p>
+          <p className="text-slate-400 text-xs sm:text-sm mt-1">Share your fitness journey</p>
         </div>
         <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-sm font-bold shadow-lg shadow-purple-500/25">
-          {showForm ? <X size={15} /> : <Plus size={15} />}
+          className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs sm:text-sm font-bold shadow-lg shadow-purple-500/25 touch-manipulation">
+          {showForm ? <X size={14} sm:size={15} /> : <Plus size={14} sm:size={15} />}
           {showForm ? 'Cancel' : 'Post'}
         </motion.button>
       </motion.div>
@@ -339,10 +339,10 @@ export default function Social() {
       <div className="flex gap-2">
         {[['all', '🌍 All'], ['following', '👥 Following']].map(([t, label]) => (
           <button key={t} onClick={() => setTab(t)}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all touch-manipulation ${
               tab === t
                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
-                : 'glass text-slate-400 border border-purple-500/20 hover:text-slate-200'
+                : 'glass text-slate-400 border border-purple-500/20 hover:text-slate-200 active:bg-white/10'
             }`}>{label}</button>
         ))}
       </div>

@@ -43,9 +43,9 @@ export default function FollowButton({
   }
 
   const sizeClasses = {
-    sm: 'px-3 py-1.5 text-xs',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base'
+    sm: 'px-3 py-1.5 text-xs min-h-8',
+    md: 'px-4 py-2 text-sm min-h-10',
+    lg: 'px-6 py-3 text-base min-h-12'
   }
 
   const iconSizes = {
@@ -61,11 +61,11 @@ export default function FollowButton({
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       className={`
-        flex items-center gap-2 rounded-xl font-medium transition-all duration-200
+        flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 touch-manipulation
         ${sizeClasses[size]}
         ${isFollowing 
-          ? 'bg-slate-500/20 hover:bg-red-500/20 text-slate-300 hover:text-red-300 border border-slate-500/30 hover:border-red-500/30' 
-          : 'bg-purple-500 hover:bg-purple-600 text-white border border-purple-500'
+          ? 'bg-slate-500/20 hover:bg-red-500/20 active:bg-red-500/30 text-slate-300 hover:text-red-300 border border-slate-500/30 hover:border-red-500/30' 
+          : 'bg-purple-500 hover:bg-purple-600 active:bg-purple-700 text-white border border-purple-500'
         }
         ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
         ${className}

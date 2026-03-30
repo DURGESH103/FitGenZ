@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
 import { useTheme } from '../context/ThemeContext'
 import { motion } from 'framer-motion'
-import NotificationBell from './NotificationBell'
+import NotificationDropdown from './NotificationDropdown'
 
 const links = [
   { to: '/dashboard',   icon: LayoutDashboard, label: 'Dashboard'   },
@@ -35,7 +35,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="hidden md:flex flex-col w-60 min-h-screen glass border-r border-purple-500/20 p-6 fixed left-0 top-0 z-40">
+    <aside className="hidden md:flex flex-col w-60 min-h-screen glass border-r border-purple-500/20 p-6 fixed left-0 top-0 z-40 overflow-visible">
       <div className="mb-10 flex items-center justify-between">
         <span className="text-2xl font-black bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
           FitGenZ
@@ -46,7 +46,7 @@ export default function Sidebar() {
           <button onClick={toggle} className="p-1.5 rounded-lg hover:bg-white/8 text-slate-400 hover:text-slate-200 transition-colors">
             {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
           </button>
-          <NotificationBell />
+          <NotificationDropdown />
         </div>
       </div>
 

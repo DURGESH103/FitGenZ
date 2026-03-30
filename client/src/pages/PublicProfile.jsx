@@ -83,23 +83,23 @@ export default function PublicProfile() {
   const { user: userData, stats, levelInfo, isOwnProfile } = profile
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6 pb-24 md:pb-8">
+    <div className="p-3 sm:p-4 md:p-8 max-w-4xl mx-auto space-y-4 sm:space-y-6 pb-safe">
       
       {/* Header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }} 
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-4"
+        className="flex items-center gap-3 sm:gap-4"
       >
         <button
           onClick={() => navigate(-1)}
-          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-slate-400 hover:text-white transition-colors touch-manipulation"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={18} sm:size={20} />
         </button>
-        <div>
-          <h1 className="text-2xl font-black text-white">{userData.name}</h1>
-          <p className="text-slate-400 text-sm">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-xl sm:text-2xl font-black text-white truncate">{userData.name}</h1>
+          <p className="text-slate-400 text-xs sm:text-sm">
             {isOwnProfile ? 'Your Profile' : 'User Profile'}
           </p>
         </div>

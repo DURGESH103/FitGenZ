@@ -8,7 +8,17 @@
   --color-border: rgba(168, 85, 247, 0.2);
 }
 
-* { box-sizing: border-box; }
+* { 
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile viewport optimization */
+html {
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
 
 /* ── Dark theme (default) ─────────────────────────────────────────────────── */
 :root, [data-theme="dark"] {
@@ -39,7 +49,36 @@ body {
   color: var(--text);
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
+  min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+}
+
+/* Mobile-first responsive typography */
+@media (max-width: 640px) {
+  html { font-size: 14px; }
+}
+
+@media (min-width: 641px) {
+  html { font-size: 16px; }
+}
+
+/* Touch-friendly interactive elements */
+button, [role="button"], input[type="submit"], input[type="button"] {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Improved form inputs for mobile */
+input, textarea, select {
+  font-size: 16px; /* Prevents zoom on iOS */
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 /* Shimmer animation for skeletons */
@@ -62,10 +101,197 @@ body {
   transition: background 0.3s ease;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-::-webkit-scrollbar-thumb { background: #a855f7; border-radius: 2px; }
+/* Mobile-optimized scrollbar */
+::-webkit-scrollbar { 
+  width: 2px;
+}
 
-/* Safe area for mobile bottom nav */
-.pb-safe { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
+@media (min-width: 768px) {
+  ::-webkit-scrollbar { width: 4px; }
+}
+
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { 
+  background: #a855f7; 
+  border-radius: 2px;
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.pl-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+}
+
+.pr-safe {
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+/* Mobile-specific utilities */
+.touch-pan-y {
+  touch-action: pan-y;
+}
+
+.touch-pan-x {
+  touch-action: pan-x;
+}
+
+.no-scroll {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
+/* Improved mobile modals */
+@media (max-width: 640px) {
+  .modal-mobile {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+    max-height: 100vh;
+    max-height: 100dvh;
+  }
+}
+
+/* Better mobile cards */
+@media (max-width: 640px) {
+  .card-mobile {
+    border-radius: 16px;
+    margin: 0 -4px;
+  }
+}
+
+/* Optimized animations for mobile */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile keyboard handling */
+@media (max-width: 640px) {
+  .keyboard-adjust {
+    transition: transform 0.3s ease;
+  }
+  
+  .keyboard-adjust.keyboard-open {
+    transform: translateY(-50px);
+  }
+}
+
+/* Notification system specific styles */
+.notification-portal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.notification-portal > * {
+  pointer-events: auto;
+}
+
+/* Ensure notification dropdowns are never clipped */
+.notification-container {
+  position: relative;
+  z-index: 50;
+}
+
+.notification-container * {
+  overflow: visible !important;
+}
+
+/* Custom scrollbar for notification list */
+.notification-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.notification-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notification-scroll::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.3);
+  border-radius: 2px;
+}
+
+.notification-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.5);
+}
+
+/* Notification badge pulse animation */
+@keyframes notification-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.notification-badge {
+  animation: notification-pulse 2s infinite;
+}
+
+/* Mobile sidebar specific styles */
+.mobile-sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+}
+
+.mobile-sidebar-panel {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 75%;
+  max-width: 320px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(168, 85, 247, 0.2);
+  box-shadow: 20px 0 25px -5px rgba(0, 0, 0, 0.4);
+  z-index: 51;
+  overflow-y: auto;
+}
+
+/* Hamburger menu animation */
+.hamburger-menu {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hamburger-menu:hover {
+  transform: scale(1.05);
+}
+
+.hamburger-menu:active {
+  transform: scale(0.95);
+}
+
+/* Mobile sidebar scroll styling */
+.mobile-sidebar-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-sidebar-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobile-sidebar-panel::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.3);
+  border-radius: 2px;
+}
+
+.mobile-sidebar-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.5);
+}

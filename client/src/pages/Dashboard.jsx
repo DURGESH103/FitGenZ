@@ -245,14 +245,14 @@ export default function Dashboard() {
   }))
 
   return (
-    <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-4 pb-24 md:pb-8">
+    <div className="p-3 sm:p-4 md:p-8 max-w-4xl mx-auto space-y-3 sm:space-y-4 pb-safe">
 
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between">
         <div>
-          <p className="text-slate-400 text-sm">{getGreeting()},</p>
-          <h1 className="text-2xl md:text-3xl font-black text-white mt-0.5">{user?.name?.split(' ')[0]} 👋</h1>
-          <p className="text-xs text-slate-500 mt-1 capitalize">{user?.goal?.replace(/_/g, ' ')} · {user?.gender}</p>
+          <p className="text-slate-400 text-xs sm:text-sm">{getGreeting()},</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-white mt-0.5">{user?.name?.split(' ')[0]} 👋</h1>
+          <p className="text-[10px] sm:text-xs text-slate-500 mt-1 capitalize">{user?.goal?.replace(/_/g, ' ')} · {user?.gender}</p>
         </div>
         <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }}>
           <StreakRing streak={streak} />
@@ -265,23 +265,23 @@ export default function Dashboard() {
       </motion.div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {[
           { label: 'Streak',  value: `${streak}d 🔥`,                          color: 'from-orange-500/25 to-red-500/15 border-orange-500/30' },
           { label: 'Tasks',   value: `${completedCount}/${tasks.length}`,       color: 'from-yellow-500/25 to-orange-500/15 border-yellow-500/30' },
           { label: 'Goal',    value: user?.goal?.replace('_', ' '),             color: 'from-purple-500/25 to-pink-500/15 border-purple-500/30' },
         ].map(({ label, value, color }, i) => (
           <motion.div key={label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }} whileHover={{ scale: 1.04, y: -2 }}
-            className={`glass rounded-2xl p-3 md:p-4 bg-gradient-to-br border ${color}`}>
-            <p className="text-[10px] text-slate-400 mb-1 uppercase tracking-wide">{label}</p>
-            <p className="font-bold text-white capitalize text-sm truncate">{value}</p>
+            transition={{ delay: i * 0.08 }} whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}
+            className={`glass rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 bg-gradient-to-br border ${color}`}>
+            <p className="text-[9px] sm:text-[10px] text-slate-400 mb-1 uppercase tracking-wide">{label}</p>
+            <p className="font-bold text-white capitalize text-xs sm:text-sm truncate">{value}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Daily Reward + AI Insights */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
           <DailyReward
             canClaim={canClaimReward}
@@ -295,8 +295,8 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      {/* Heatmap + Goal side by side on md+ */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Heatmap + Goal side by side on larger screens */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <WeeklyHeatmap analytics={analytics} />
         </motion.div>
@@ -306,11 +306,11 @@ export default function Dashboard() {
       </div>
 
       {/* Daily Tasks */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass rounded-2xl p-5">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass rounded-xl sm:rounded-2xl p-4 sm:p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Target size={16} className="text-purple-400" />
-            <h2 className="font-bold text-white">Daily Tasks</h2>
+            <Target size={14} sm:size={16} className="text-purple-400" />
+            <h2 className="font-bold text-white text-sm sm:text-base">Daily Tasks</h2>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-purple-400 font-semibold">{progressPct}%</span>
@@ -332,11 +332,11 @@ export default function Dashboard() {
                 ref={(el) => { taskBtnRefs.current[task._id] = el }}
                 initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors text-left group">
-                <motion.div whileHover={{ scale: 1.15 }}>
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 active:bg-white/10 transition-colors text-left group touch-manipulation">
+                <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
                   {task.completed
-                    ? <CheckCircle2 size={20} className="text-green-400 shrink-0" />
-                    : <Circle size={20} className="text-slate-600 shrink-0 group-hover:text-slate-400 transition-colors" />}
+                    ? <CheckCircle2 size={18} sm:size={20} className="text-green-400 shrink-0" />
+                    : <Circle size={18} sm:size={20} className="text-slate-600 shrink-0 group-hover:text-slate-400 transition-colors" />}
                 </motion.div>
                 <span className={`text-sm transition-colors ${task.completed ? 'line-through text-slate-500' : 'text-slate-200'}`}>
                   {task.title}
@@ -350,12 +350,12 @@ export default function Dashboard() {
 
       {/* Weight Chart */}
       {loadingProgress ? <ChartSkeleton /> : chartData.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass rounded-2xl p-5">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass rounded-xl sm:rounded-2xl p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-bold text-white">Weight Progress</h2>
+            <h2 className="font-bold text-white text-sm sm:text-base">Weight Progress</h2>
             <span className="text-xs text-slate-500">{chartData.length} entries</span>
           </div>
-          <ResponsiveContainer width="100%" height={160}>
+          <ResponsiveContainer width="100%" height={140} sm:height={160}>
             <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="wGrad" x1="0" y1="0" x2="0" y2="1">
@@ -364,35 +364,35 @@ export default function Dashboard() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-              <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#475569', fontSize: 10 }} axisLine={false} tickLine={false} width={35} domain={['auto','auto']} />
-              <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(168,85,247,0.3)', borderRadius: 10, color: '#f1f5f9', fontSize: 12 }}
+              <XAxis dataKey="date" tick={{ fill: '#475569', fontSize: 9 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#475569', fontSize: 9 }} axisLine={false} tickLine={false} width={30} domain={['auto','auto']} />
+              <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid rgba(168,85,247,0.3)', borderRadius: 10, color: '#f1f5f9', fontSize: 11 }}
                 cursor={{ stroke: 'rgba(168,85,247,0.25)', strokeWidth: 1 }} />
-              <Area type="monotone" dataKey="weight" stroke="#a855f7" strokeWidth={2.5} fill="url(#wGrad)"
-                dot={{ fill: '#a855f7', r: 3, strokeWidth: 0 }} activeDot={{ r: 5, fill: '#c084fc' }} />
+              <Area type="monotone" dataKey="weight" stroke="#a855f7" strokeWidth={2} fill="url(#wGrad)"
+                dot={{ fill: '#a855f7', r: 2, strokeWidth: 0 }} activeDot={{ r: 4, fill: '#c084fc' }} />
             </AreaChart>
           </ResponsiveContainer>
         </motion.div>
       )}
 
       {/* Achievements */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="glass rounded-2xl p-5">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="glass rounded-xl sm:rounded-2xl p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-4">
-          <Trophy size={16} className="text-yellow-400" />
-          <h2 className="font-bold text-white">Achievements</h2>
+          <Trophy size={14} sm:size={16} className="text-yellow-400" />
+          <h2 className="font-bold text-white text-sm sm:text-base">Achievements</h2>
           <span className="ml-auto text-xs text-slate-500">{badges.length} unlocked</span>
         </div>
         {badges.length === 0 ? (
           <p className="text-slate-500 text-sm text-center py-3">Complete tasks to earn badges!</p>
         ) : (
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-2.5">
             {badges.map((b, i) => (
               <motion.div key={b.id} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3 + i * 0.05 }} whileHover={{ scale: 1.1, y: -2 }}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-xl cursor-default bg-gradient-to-br from-yellow-500/20 to-orange-500/10 border border-yellow-500/30">
-                <span className="text-2xl">{b.icon}</span>
-                <span className="text-[9px] text-center text-slate-300 leading-tight font-medium">{b.label}</span>
-                <span className="text-[8px] text-yellow-400 font-bold">EARNED</span>
+                transition={{ delay: 0.3 + i * 0.05 }} whileHover={{ scale: 1.05, y: -1 }} whileTap={{ scale: 0.95 }}
+                className="flex flex-col items-center gap-1.5 p-2 sm:p-3 rounded-xl cursor-default bg-gradient-to-br from-yellow-500/20 to-orange-500/10 border border-yellow-500/30 touch-manipulation">
+                <span className="text-xl sm:text-2xl">{b.icon}</span>
+                <span className="text-[8px] sm:text-[9px] text-center text-slate-300 leading-tight font-medium">{b.label}</span>
+                <span className="text-[7px] sm:text-[8px] text-yellow-400 font-bold">EARNED</span>
               </motion.div>
             ))}
           </div>
