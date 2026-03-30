@@ -83,8 +83,17 @@ export default function Leaderboard() {
       const { data } = await api.get(url)
       setBoard(data.leaderboard)
       setMyRank(data.myRank)
-    } catch { /* silent */ }
-    finally { setLoading(false) }
+    } catch (error) {
+      console.error('Leaderboard fetch error:', error)
+      if (error.response?.status === 401) {
+        console.log('Authentication required for leaderboard')
+      }
+      // Set empty state on error
+      setBoard([])
+      setMyRank(null)
+    } finally { 
+      setLoading(false) 
+    }
   }, [])
 
   useEffect(() => { load(tab) }, [tab, load])
@@ -93,7 +102,9 @@ export default function Leaderboard() {
     try {
       const { data } = await api.post(`/social/follow/${entry._id || entry.userId}`)
       setBoard((b) => b.map((e) => e.rank === entry.rank ? { ...e, isFollowing: data.following } : e))
-    } catch { /* silent */ }
+    } catch (error) {
+      console.error('Follow error:', error)
+    }
   }
 
   return (
@@ -131,7 +142,7 @@ export default function Leaderboard() {
               </div>
             ) : (
               board.map((entry, i) => (
-                <LeaderRow key={i} entry={entry} i={i} onFollow={handleFollow} />
+                <LeaderRow key={entry._id || entry.userId || `rank-${entry.rank}-${i}`} entry={entry} i={i} onFollow={handleFollow} />
               ))
             )}
           </motion.div>
