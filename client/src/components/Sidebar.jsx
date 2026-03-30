@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, Dumbbell, Salad, TrendingUp, Bot, LogOut, Crown, Users, Sun, Moon } from 'lucide-react'
+import { LayoutDashboard, Dumbbell, Salad, TrendingUp, Bot, LogOut, Crown, Users, Sun, Moon, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useSocket } from '../context/SocketContext'
 import { useTheme } from '../context/ThemeContext'
@@ -14,6 +14,7 @@ const links = [
   { to: '/ai',          icon: Bot,             label: 'AI Coach'    },
   { to: '/leaderboard', icon: Crown,           label: 'Leaderboard' },
   { to: '/social',      icon: Users,           label: 'Community'   },
+  { to: '/profile',     icon: User,            label: 'Profile'     },
 ]
 
 export default function Sidebar() {
@@ -22,7 +23,16 @@ export default function Sidebar() {
   const { theme, toggle } = useTheme()
   const navigate = useNavigate()
 
-  const handleLogout = async () => { await logout(); navigate('/login') }
+  const handleLogout = async () => {
+    try {
+      await logout()
+      navigate('/login')
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Navigate anyway since logout should always succeed from user perspective
+      navigate('/login')
+    }
+  }
 
   return (
     <aside className="hidden md:flex flex-col w-60 min-h-screen glass border-r border-purple-500/20 p-6 fixed left-0 top-0 z-40">

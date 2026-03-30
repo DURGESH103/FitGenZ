@@ -1,10 +1,13 @@
 const User       = require("../models/User");
 const UserStats  = require("../models/UserStats");
 const Progress   = require("../models/Progress");
+const Notification = require("../models/Notification");
 const asyncHandler = require("../utils/asyncHandler");
 const { generatePersonalizedPlan } = require("../services/personalizationService");
 const { calculateDailyCalories }   = require("../utils/calorieCalculator");
 const { calcGoalProgress }         = require("../services/predictionService");
+const { followUser: followUserService, unfollowUser: unfollowUserService, getFollowSuggestions: getSuggestionsService } = require("../services/socialService");
+const { emitToUser } = require("../config/socket");
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -160,4 +163,134 @@ const changePassword = asyncHandler(async (req, res) => {
   return res.status(200).json({ message: "Password changed successfully" });
 });
 
-module.exports = { getProfile, updateProfile, uploadAvatar, changePassword };
+// ── GET /api/user/:id ─────────────────────────────────────────────────────────
+const getPublicProfile = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const currentUserId = req.user._id;
+
+  const [user, stats] = await Promise.all([
+    User.findById(id).select("-password -email").populate("followers following", "name avatarUrl"),
+    UserStats.findOne({ user: id })
+  ]);
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+  if (!user.isPublic && !user._id.equals(currentUserId)) {
+    return res.status(403).json({ message: "This profile is private" });
+  }
+
+  const isFollowing = user.followers.some(f => f._id.equals(currentUserId));
+  const isOwnProfile = user._id.equals(currentUserId);
+  const levelInfo = stats ? stats.getLevelInfo() : null;
+
+  return res.status(200).json({
+    user: {
+      ...user.toObject(),
+      followersCount: user.followers.length,
+      followingCount: user.following.length,
+    },
+    stats: stats || {},
+    levelInfo,
+    isFollowing,
+    isOwnProfile
+  });
+});
+
+// ── POST /api/user/follow/:id ─────────────────────────────────────────────────
+const followUser = asyncHandler(async (req, res) => {
+  const { id: targetUserId } = req.params;
+  const currentUserId = req.user._id;
+
+  if (targetUserId === currentUserId.toString()) {
+    return res.status(400).json({ message: "Cannot follow yourself" });
+  }
+
+  const [currentUser, targetUser] = await Promise.all([
+    User.findById(currentUserId),
+    User.findById(targetUserId)
+  ]);
+
+  if (!targetUser) return res.status(404).json({ message: "User not found" });
+  if (!targetUser.isPublic) return res.status(403).json({ message: "Cannot follow private profile" });
+
+  // Check if already following
+  if (currentUser.following.includes(targetUserId)) {
+    return res.status(400).json({ message: "Already following this user" });
+  }
+
+  // Update both users
+  await Promise.all([
+    User.findByIdAndUpdate(currentUserId, { $push: { following: targetUserId } }),
+    User.findByIdAndUpdate(targetUserId, { $push: { followers: currentUserId } })
+  ]);
+
+  // Create notification
+  const notification = new Notification({
+    user: targetUserId,
+    sender: currentUserId,
+    type: "follow",
+    title: "New Follower",
+    body: `${currentUser.name} started following you`,
+    metadata: { followerId: currentUserId }
+  });
+  await notification.save();
+
+  // Emit real-time notification
+  const populatedNotification = await Notification.findById(notification._id)
+    .populate("sender", "name avatarUrl")
+    .lean();
+  
+  emitToUser(targetUserId, "NEW_NOTIFICATION", populatedNotification);
+
+  return res.status(200).json({ message: "User followed successfully", isFollowing: true });
+});
+
+// ── POST /api/user/unfollow/:id ───────────────────────────────────────────────
+const unfollowUser = asyncHandler(async (req, res) => {
+  const { id: targetUserId } = req.params;
+  const currentUserId = req.user._id;
+
+  if (targetUserId === currentUserId.toString()) {
+    return res.status(400).json({ message: "Cannot unfollow yourself" });
+  }
+
+  const currentUser = await User.findById(currentUserId);
+  if (!currentUser.following.includes(targetUserId)) {
+    return res.status(400).json({ message: "Not following this user" });
+  }
+
+  // Update both users
+  await Promise.all([
+    User.findByIdAndUpdate(currentUserId, { $pull: { following: targetUserId } }),
+    User.findByIdAndUpdate(targetUserId, { $pull: { followers: currentUserId } })
+  ]);
+
+  return res.status(200).json({ message: "User unfollowed successfully", isFollowing: false });
+});
+
+// ── GET /api/user/suggestions ─────────────────────────────────────────────────
+const getFollowSuggestions = asyncHandler(async (req, res) => {
+  const currentUserId = req.user._id;
+  const currentUser = await User.findById(currentUserId);
+  
+  // Find users not already followed, excluding self, limit to public profiles
+  const suggestions = await User.find({
+    _id: { $nin: [...currentUser.following, currentUserId] },
+    isPublic: true
+  })
+  .select("name avatarUrl bio goal")
+  .limit(10)
+  .lean();
+
+  return res.status(200).json({ suggestions });
+});
+
+module.exports = { 
+  getProfile, 
+  updateProfile, 
+  uploadAvatar, 
+  changePassword, 
+  getPublicProfile, 
+  followUser, 
+  unfollowUser, 
+  getFollowSuggestions 
+};

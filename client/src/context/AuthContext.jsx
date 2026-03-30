@@ -28,7 +28,13 @@ export function AuthProvider({ children }) {
   }, [])
 
   const logout = useCallback(async () => {
-    try { await api.post('/auth/logout') } finally {
+    try {
+      await api.post('/auth/logout')
+    } catch (error) {
+      // Log error but don't prevent logout
+      console.error('Logout API error:', error)
+    } finally {
+      // Always clear local storage and state, even if API call fails
       localStorage.removeItem('accessToken')
       localStorage.removeItem('user')
       setUser(null)

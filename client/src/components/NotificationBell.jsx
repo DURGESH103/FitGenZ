@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Bell, X } from 'lucide-react'
+import { Bell, X, User } from 'lucide-react'
 import { useNotifications } from '../hooks/useNotifications'
+import { useNavigate } from 'react-router-dom'
 
 const TYPE_ICON = {
   streak_alert:     '🔥',
@@ -9,11 +10,15 @@ const TYPE_ICON = {
   level_up:         '🎉',
   badge_earned:     '🏅',
   goal_milestone:   '🎯',
+  follow:           '👥',
+  like:             '❤️',
+  comment:          '💬',
 }
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const navigate = useNavigate()
   const { notifications, unreadCount, markAllRead } = useNotifications()
 
   // Close on outside click
@@ -22,6 +27,13 @@ export default function NotificationBell() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
+
+  const handleNotificationClick = (notification) => {
+    if (notification.type === 'follow' && notification.sender) {
+      navigate(`/profile/${notification.sender._id}`)
+      setOpen(false)
+    }
+  }
 
   const handleOpen = () => {
     setOpen((v) => !v)
@@ -61,9 +73,18 @@ export default function NotificationBell() {
               ) : (
                 notifications.map((n) => (
                   <div key={n._id}
-                    className={`px-4 py-3 border-b border-white/5 hover:bg-white/4 transition-colors ${!n.read ? 'bg-purple-500/5' : ''}`}>
+                    onClick={() => handleNotificationClick(n)}
+                    className={`px-4 py-3 border-b border-white/5 hover:bg-white/4 transition-colors cursor-pointer ${!n.read ? 'bg-purple-500/5' : ''}`}>
                     <div className="flex items-start gap-2.5">
-                      <span className="text-lg shrink-0 mt-0.5">{TYPE_ICON[n.type] || '🔔'}</span>
+                      {n.sender?.avatarUrl ? (
+                        <img src={n.sender.avatarUrl} alt="" className="w-8 h-8 rounded-full shrink-0 mt-0.5" />
+                      ) : n.type === 'follow' ? (
+                        <div className="w-8 h-8 rounded-full bg-purple-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                          <User size={14} className="text-purple-300" />
+                        </div>
+                      ) : (
+                        <span className="text-lg shrink-0 mt-0.5">{TYPE_ICON[n.type] || '🔔'}</span>
+                      )}
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-white leading-snug">{n.title}</p>
                         <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{n.body}</p>

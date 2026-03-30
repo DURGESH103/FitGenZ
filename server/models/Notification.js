@@ -10,12 +10,13 @@ const notificationSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["streak_alert", "workout_reminder", "level_up", "badge_earned", "goal_milestone"],
+      enum: ["streak_alert", "workout_reminder", "level_up", "badge_earned", "goal_milestone", "follow", "like", "comment"],
       required: true,
     },
     title:   { type: String, required: true },
     body:    { type: String, required: true },
     read:    { type: Boolean, default: false, index: true },
+    sender:  { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Who triggered the notification
     metadata:{ type: mongoose.Schema.Types.Mixed, default: {} },
   },
   { timestamps: true }

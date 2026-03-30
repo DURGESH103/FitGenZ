@@ -17,6 +17,8 @@ const Progress    = lazy(() => import('./pages/Progress'))
 const AI          = lazy(() => import('./pages/AI'))
 const Leaderboard = lazy(() => import('./pages/Leaderboard'))
 const Social      = lazy(() => import('./pages/Social'))
+const Profile     = lazy(() => import('./pages/Profile'))
+const PublicProfile = lazy(() => import('./pages/PublicProfile'))
 
 export default function App() {
   return (
@@ -38,6 +40,8 @@ export default function App() {
                   <Route path="/ai"          element={<AI />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
                   <Route path="/social"      element={<Social />} />
+                  <Route path="/profile"     element={<Profile />} />
+                  <Route path="/profile/:id" element={<PublicProfile />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />

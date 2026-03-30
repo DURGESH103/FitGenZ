@@ -18,6 +18,7 @@ export const EVENTS = {
   FEED_NEW_POST:    'feed:new_post',
   FEED_LIKE:        'feed:like_update',
   FEED_COMMENT:     'feed:comment_added',
+  NEW_NOTIFICATION: 'NEW_NOTIFICATION',
 }
 
 const SocketContext = createContext(null)
@@ -27,6 +28,7 @@ export function SocketProvider({ children }) {
   const socketRef   = useRef(null)
   const [connected, setConnected] = useState(false)
   const [liveStats, setLiveStats] = useState(null)
+  const [notifications, setNotifications] = useState([])
 
   const showXPToast = useCallback((xpGain, source) => {
     if (!xpGain || xpGain <= 0) return
@@ -124,6 +126,17 @@ export function SocketProvider({ children }) {
       })
     })
 
+    // Social notifications
+    socket.on(EVENTS.NEW_NOTIFICATION, (notification) => {
+      setNotifications(prev => [notification, ...prev])
+      if (notification.type === 'follow') {
+        toast(`${notification.sender?.name || 'Someone'} started following you!`, {
+          style: { background: '#1a1a2e', color: '#a855f7', border: '1px solid rgba(168,85,247,0.4)', fontWeight: 700 },
+          duration: 3000,
+        })
+      }
+    })
+
     return () => {
       socket.disconnect()
       socketRef.current = null
@@ -131,7 +144,15 @@ export function SocketProvider({ children }) {
   }, [user, showXPToast])
 
   return (
-    <SocketContext.Provider value={{ socket: socketRef.current, connected, liveStats, setLiveStats, EVENTS }}>
+    <SocketContext.Provider value={{ 
+      socket: socketRef.current, 
+      connected, 
+      liveStats, 
+      setLiveStats, 
+      notifications,
+      setNotifications,
+      EVENTS 
+    }}>
       {children}
     </SocketContext.Provider>
   )

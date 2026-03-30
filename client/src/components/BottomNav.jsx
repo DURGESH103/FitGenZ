@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Dumbbell, Salad, TrendingUp, Crown, Users } from 'lucide-react'
+import { LayoutDashboard, Dumbbell, Salad, TrendingUp, Crown, Users, User } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 const links = [
@@ -7,7 +7,7 @@ const links = [
   { to: '/workout',     icon: Dumbbell,        label: 'Workout'   },
   { to: '/progress',    icon: TrendingUp,      label: 'Progress'  },
   { to: '/leaderboard', icon: Crown,           label: 'Ranks'     },
-  { to: '/social',      icon: Users,           label: 'Community' },
+  { to: '/profile',     icon: User,            label: 'Profile'   },
 ]
 
 export default function BottomNav() {

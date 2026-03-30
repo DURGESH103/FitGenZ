@@ -149,15 +149,34 @@ const refresh = asyncHandler(async (req, res) => {
   });
 });
 
-const logout = asyncHandler(async (req, res) => {
-  const incomingRefreshToken = req.body.refreshToken || req.cookies.refreshToken;
-  if (incomingRefreshToken) {
-    const tokenHash = hashToken(incomingRefreshToken);
-    await RefreshToken.updateMany({ tokenHash, revokedAt: null }, { $set: { revokedAt: new Date() } });
-  }
+const logout = (req, res) => {
+  try {
+    const incomingRefreshToken = req.body.refreshToken || req.cookies.refreshToken;
+    
+    // Async token cleanup - don't wait for it
+    if (incomingRefreshToken && typeof incomingRefreshToken === 'string' && incomingRefreshToken.length > 0) {
+      const tokenHash = hashToken(incomingRefreshToken);
+      RefreshToken.updateMany(
+        { tokenHash, revokedAt: null }, 
+        { $set: { revokedAt: new Date() } }
+      ).catch(error => {
+        console.error('Error revoking refresh token:', error.message);
+      });
+    }
 
-  res.clearCookie("refreshToken");
-  return res.status(200).json({ message: "Logged out successfully" });
-});
+    // Clear the cookie
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/"
+    });
+    
+    return res.status(200).json({ message: "Logged out successfully" });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return res.status(200).json({ message: "Logged out successfully" });
+  }
+};
 
 module.exports = { signup, login, refresh, logout };

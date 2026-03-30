@@ -22,6 +22,10 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String, default: null },
     bio:       { type: String, default: "", maxlength: 200, trim: true },
     isPublic:  { type: Boolean, default: true },
+    
+    // Social features
+    followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   },
   { timestamps: true }
 );

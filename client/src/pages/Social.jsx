@@ -2,10 +2,12 @@ import { useEffect, useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../context/AuthContext'
 import { useSocket, EVENTS } from '../context/SocketContext'
+import { useNavigate } from 'react-router-dom'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
-import { Heart, MessageCircle, Send, Plus, X, Users, UserPlus, UserCheck } from 'lucide-react'
+import { Heart, MessageCircle, Send, Plus, X, Users, UserPlus, UserCheck, User } from 'lucide-react'
 import { ListSkeleton } from '../components/Skeleton'
+import FollowButton from '../components/FollowButton'
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000)
@@ -15,7 +17,7 @@ function timeAgo(date) {
   return `${Math.floor(s / 86400)}d ago`
 }
 
-function PostCard({ post, onLike, onComment, onFollow, myId }) {
+function PostCard({ post, onLike, onComment, onFollow, myId, onUserClick }) {
   const [showComments, setShowComments] = useState(false)
   const [commentText,  setCommentText]  = useState('')
   const [submitting,   setSubmitting]   = useState(false)
@@ -37,11 +39,19 @@ function PostCard({ post, onLike, onComment, onFollow, myId }) {
 
       {/* Header */}
       <div className="flex items-center gap-3 p-4 pb-3">
-        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shrink-0 text-sm font-black text-white">
+        <button 
+          onClick={() => onUserClick(post.user?._id || post.user?.id)}
+          className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shrink-0 text-sm font-black text-white hover:scale-105 transition-transform"
+        >
           {post.user?.name?.[0]?.toUpperCase() || '?'}
-        </div>
+        </button>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-white text-sm">{post.user?.name || 'User'}</p>
+          <button 
+            onClick={() => onUserClick(post.user?._id || post.user?.id)}
+            className="font-semibold text-white text-sm hover:text-purple-300 transition-colors text-left"
+          >
+            {post.user?.name || 'User'}
+          </button>
           <p className="text-[11px] text-slate-500 capitalize">
             {post.user?.goal?.replace(/_/g, ' ')} · {timeAgo(post.createdAt)}
           </p>
@@ -124,9 +134,100 @@ function PostCard({ post, onLike, onComment, onFollow, myId }) {
   )
 }
 
+function FollowSuggestions({ onUserClick }) {
+  const [suggestions, setSuggestions] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      try {
+        const { data } = await api.get('/user/suggestions')
+        setSuggestions(data.suggestions)
+      } catch {
+        // Silent fail
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchSuggestions()
+  }, [])
+
+  const handleFollowChange = (userId, isFollowing) => {
+    setSuggestions(prev => prev.filter(s => s._id !== userId))
+  }
+
+  if (loading) {
+    return (
+      <div className="glass rounded-2xl p-4">
+        <div className="shimmer h-5 w-32 mb-3 rounded" />
+        <div className="space-y-3">
+          {[1,2,3].map(i => (
+            <div key={i} className="flex items-center gap-3">
+              <div className="shimmer w-10 h-10 rounded-full" />
+              <div className="flex-1">
+                <div className="shimmer h-4 w-24 mb-1 rounded" />
+                <div className="shimmer h-3 w-16 rounded" />
+              </div>
+              <div className="shimmer h-8 w-16 rounded-lg" />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (suggestions.length === 0) return null
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      animate={{ opacity: 1, y: 0 }}
+      className="glass rounded-2xl p-4 border border-purple-500/20"
+    >
+      <h3 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
+        <Users size={16} className="text-purple-400" />
+        People you may know
+      </h3>
+      <div className="space-y-3">
+        {suggestions.slice(0, 5).map(suggestion => (
+          <div key={suggestion._id} className="flex items-center gap-3">
+            <button
+              onClick={() => onUserClick(suggestion._id)}
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-purple-500/40 flex items-center justify-center overflow-hidden hover:scale-105 transition-transform"
+            >
+              {suggestion.avatarUrl ? (
+                <img src={suggestion.avatarUrl} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <User size={16} className="text-purple-300" />
+              )}
+            </button>
+            <div className="flex-1 min-w-0">
+              <button
+                onClick={() => onUserClick(suggestion._id)}
+                className="font-medium text-white text-sm hover:text-purple-300 transition-colors text-left block truncate"
+              >
+                {suggestion.name}
+              </button>
+              <p className="text-xs text-slate-400 capitalize truncate">
+                {suggestion.goal?.replace('_', ' ')} · {suggestion.bio || 'Fitness enthusiast'}
+              </p>
+            </div>
+            <FollowButton
+              userId={suggestion._id}
+              isFollowing={false}
+              onFollowChange={(isFollowing) => handleFollowChange(suggestion._id, isFollowing)}
+              size="sm"
+            />
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  )
+}
 export default function Social() {
   const { user }   = useAuth()
   const { socket } = useSocket()
+  const navigate = useNavigate()
   const [tab,      setTab]      = useState('all')
   const [posts,    setPosts]    = useState([])
   const [loading,  setLoading]  = useState(true)
@@ -199,13 +300,19 @@ export default function Social() {
 
   const handleFollow = async (userId) => {
     try {
-      const { data } = await api.post(`/social/follow/${userId}`)
+      const { data } = await api.post(`/user/follow/${userId}`)
       setPosts((p) => p.map((x) =>
         (x.user?._id === userId || x.user?.id === userId)
-          ? { ...x, isFollowing: data.following }
+          ? { ...x, isFollowing: data.isFollowing }
           : x
       ))
     } catch { /* silent */ }
+  }
+
+  const handleUserClick = (userId) => {
+    if (userId && userId !== myId) {
+      navigate(`/profile/${userId}`)
+    }
   }
 
   const myId = user?._id || user?.id
@@ -262,6 +369,9 @@ export default function Social() {
         )}
       </AnimatePresence>
 
+      {/* Follow Suggestions */}
+      {tab === 'all' && <FollowSuggestions onUserClick={handleUserClick} />}
+
       {/* Feed */}
       {loading ? <ListSkeleton rows={4} /> : posts.length === 0 ? (
         <div className="glass rounded-2xl p-14 text-center">
@@ -277,7 +387,7 @@ export default function Social() {
         <div className="space-y-4">
           {posts.map((post) => (
             <PostCard key={post._id} post={post} myId={myId}
-              onLike={handleLike} onComment={handleComment} onFollow={handleFollow} />
+              onLike={handleLike} onComment={handleComment} onFollow={handleFollow} onUserClick={handleUserClick} />
           ))}
         </div>
       )}

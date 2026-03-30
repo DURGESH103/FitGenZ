@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import api from '../utils/api'
+import { useSocket } from '../context/SocketContext'
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState([])
   const [unreadCount,   setUnreadCount]   = useState(0)
   const fetchedRef = useRef(false) // prevent StrictMode double-fetch
+  const { notifications: liveNotifications } = useSocket()
 
   const fetch = useCallback(async () => {
     try {
@@ -32,6 +34,19 @@ export function useNotifications() {
       await api.post('/notifications/push', { subscription: sub.toJSON() })
     } catch { /* push not supported or denied */ }
   }, [])
+
+  // Merge live notifications from socket
+  useEffect(() => {
+    if (liveNotifications?.length > 0) {
+      setNotifications(prev => {
+        const newNotifications = liveNotifications.filter(
+          live => !prev.some(existing => existing._id === live._id)
+        )
+        return [...newNotifications, ...prev]
+      })
+      setUnreadCount(prev => prev + liveNotifications.filter(n => !n.read).length)
+    }
+  }, [liveNotifications])
 
   useEffect(() => {
     if (fetchedRef.current) return
