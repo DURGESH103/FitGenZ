@@ -8,7 +8,13 @@ import { ChartSkeleton } from '../components/Skeleton'
 import { useConfetti } from '../hooks/useConfetti'
 import DailyReward from '../components/DailyReward'
 import AIInsights from '../components/AIInsights'
-import { Flame, Trophy, CheckCircle2, Circle, Target, Zap, TrendingUp, Calendar } from 'lucide-react'
+import QuickActions from '../components/QuickActions'
+import EnhancedStatsCard from '../components/EnhancedStatsCard'
+import RecentActivity from '../components/RecentActivity'
+import PerformanceMetrics from '../components/PerformanceMetrics'
+import FloatingActionButton from '../components/FloatingActionButton'
+import CompactDashboard from '../components/CompactDashboard'
+import { Flame, Trophy, CheckCircle2, Circle, Target, Zap, TrendingUp, Calendar, Activity } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 const getGreeting = () => {
@@ -171,6 +177,13 @@ export default function Dashboard() {
   const [streakFreezes,  setStreakFreezes]  = useState(0)
   const [loadingTasks,   setLoadingTasks]   = useState(true)
   const [loadingProgress,setLoadingProgress]= useState(true)
+  const [recentActivity, setRecentActivity] = useState([])
+  const [performanceData, setPerformanceData] = useState({
+    weeklyWorkouts: 0,
+    avgDailyXP: 0,
+    consistencyScore: 0,
+    goalCompletionRate: 0
+  })
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -200,11 +213,31 @@ export default function Dashboard() {
       setBadges(statsRes.data.stats.badges || [])
       setCanClaimReward(statsRes.data.canClaimReward)
       setStreakFreezes(statsRes.data.streakFreezes ?? 0)
-      setAnalytics(analyticsRes.data.events || [])
+      
+      const events = analyticsRes.data.events || []
+      setAnalytics(events)
+      setRecentActivity(events.slice(0, 5))
+      
+      // Calculate performance metrics
+      const weeklyWorkouts = events.filter(e => 
+        e.type === 'workout_completed' && 
+        new Date(e.date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      ).length
+      
+      const avgDailyXP = events.reduce((sum, e) => sum + (e.xpGain || 0), 0) / Math.max(events.length, 1)
+      const consistencyScore = Math.min((streak / 30) * 100, 100)
+      
+      setPerformanceData({
+        weeklyWorkouts,
+        avgDailyXP,
+        consistencyScore: Math.round(consistencyScore),
+        goalCompletionRate: predRes.data.goalProgress || 0
+      })
+      
       setGoalProgress(predRes.data.goalProgress || 0)
       setPrediction(predRes.data.prediction)
     } catch { /* silent */ }
-  }, [])
+  }, [streak])
 
   useEffect(() => {
     fetchTasks()
@@ -264,25 +297,56 @@ export default function Dashboard() {
         <XPBar levelInfo={levelInfo} />
       </motion.div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        {[
-          { label: 'Streak',  value: `${streak}d 🔥`,                          color: 'from-orange-500/25 to-red-500/15 border-orange-500/30' },
-          { label: 'Tasks',   value: `${completedCount}/${tasks.length}`,       color: 'from-yellow-500/25 to-orange-500/15 border-yellow-500/30' },
-          { label: 'Goal',    value: user?.goal?.replace('_', ' '),             color: 'from-purple-500/25 to-pink-500/15 border-purple-500/30' },
-        ].map(({ label, value, color }, i) => (
-          <motion.div key={label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }} whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}
-            className={`glass rounded-xl sm:rounded-2xl p-2 sm:p-3 md:p-4 bg-gradient-to-br border ${color}`}>
-            <p className="text-[9px] sm:text-[10px] text-slate-400 mb-1 uppercase tracking-wide">{label}</p>
-            <p className="font-bold text-white capitalize text-xs sm:text-sm truncate">{value}</p>
-          </motion.div>
-        ))}
+      {/* Compact Mobile Dashboard */}
+      <CompactDashboard
+        streak={streak}
+        completedTasks={completedCount}
+        totalTasks={tasks.length}
+        level={levelInfo?.level || 1}
+        xp={levelInfo?.xp || 0}
+        goalProgress={goalProgress}
+      />
+
+      {/* Enhanced Stats Cards - Hidden on mobile */}
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <EnhancedStatsCard
+          label="Current Streak"
+          value={streak}
+          suffix="d"
+          icon={Flame}
+          color="from-orange-500/25 to-red-500/15 border-orange-500/30"
+          delay={0.1}
+        />
+        <EnhancedStatsCard
+          label="Tasks Today"
+          value={completedCount}
+          suffix={`/${tasks.length}`}
+          icon={CheckCircle2}
+          color="from-green-500/25 to-emerald-500/15 border-green-500/30"
+          delay={0.15}
+        />
+        <EnhancedStatsCard
+          label="Current XP"
+          value={levelInfo?.xp || 0}
+          icon={Zap}
+          color="from-purple-500/25 to-pink-500/15 border-purple-500/30"
+          delay={0.2}
+        />
+        <EnhancedStatsCard
+          label="Level"
+          value={levelInfo?.level || 1}
+          icon={Trophy}
+          color="from-yellow-500/25 to-orange-500/15 border-yellow-500/30"
+          delay={0.25}
+        />
       </div>
 
-      {/* Daily Reward + AI Insights */}
-      <div className="grid grid-cols-1 gap-3 sm:gap-4">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+      {/* Quick Actions + Daily Reward - Hidden on mobile */}
+      <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+          <QuickActions />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
           <DailyReward
             canClaim={canClaimReward}
             streakFreezes={streakFreezes}
@@ -290,23 +354,35 @@ export default function Dashboard() {
             onClaimed={() => setCanClaimReward(false)}
           />
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}>
-          <AIInsights />
+      </div>
+
+      {/* AI Insights - Hidden on mobile */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="hidden md:block">
+        <AIInsights />
+      </motion.div>
+
+      {/* Performance Metrics + Recent Activity - Hidden on mobile */}
+      <div className="hidden md:grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}>
+          <PerformanceMetrics {...performanceData} />
+        </motion.div>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+          <RecentActivity activities={recentActivity} />
         </motion.div>
       </div>
 
-      {/* Heatmap + Goal side by side on larger screens */}
+      {/* Heatmap + Goal Progress - Responsive */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55 }}>
           <WeeklyHeatmap analytics={analytics} />
         </motion.div>
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
           <GoalCard goalProgress={goalProgress} prediction={prediction} />
         </motion.div>
       </div>
 
       {/* Daily Tasks */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="glass rounded-xl sm:rounded-2xl p-4 sm:p-5">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.65 }} className="glass rounded-xl sm:rounded-2xl p-4 sm:p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Target size={14} sm:size={16} className="text-purple-400" />
@@ -350,7 +426,7 @@ export default function Dashboard() {
 
       {/* Weight Chart */}
       {loadingProgress ? <ChartSkeleton /> : chartData.length > 0 && (
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="glass rounded-xl sm:rounded-2xl p-4 sm:p-5">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="glass rounded-xl sm:rounded-2xl p-4 sm:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-bold text-white text-sm sm:text-base">Weight Progress</h2>
             <span className="text-xs text-slate-500">{chartData.length} entries</span>
@@ -376,7 +452,7 @@ export default function Dashboard() {
       )}
 
       {/* Achievements */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="glass rounded-xl sm:rounded-2xl p-4 sm:p-5">
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }} className="glass rounded-xl sm:rounded-2xl p-4 sm:p-5">
         <div className="flex items-center gap-2 mb-4">
           <Trophy size={14} sm:size={16} className="text-yellow-400" />
           <h2 className="font-bold text-white text-sm sm:text-base">Achievements</h2>
@@ -398,6 +474,9 @@ export default function Dashboard() {
           </div>
         )}
       </motion.div>
+
+      {/* Mobile Floating Action Button */}
+      <FloatingActionButton />
     </div>
   )
 }

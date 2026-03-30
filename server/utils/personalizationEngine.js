@@ -39,6 +39,26 @@ const workoutTemplates = {
           ],
         },
       },
+      advanced: {
+        home: {
+          title: "Male Fat-Loss Home Advanced",
+          exercises: [
+            { name: "Burpee Box Jumps", sets: 5, reps: "12" },
+            { name: "Single-Arm Push-Ups", sets: 4, reps: "8 each arm" },
+            { name: "Pistol Squats", sets: 4, reps: "6 each leg" },
+            { name: "Handstand Push-Ups", sets: 3, reps: "5" },
+          ],
+        },
+        gym: {
+          title: "Male Fat-Loss Gym Advanced",
+          exercises: [
+            { name: "Barbell Complex", sets: 5, reps: "8" },
+            { name: "Weighted Pull-Ups", sets: 4, reps: "6-8" },
+            { name: "Thrusters", sets: 5, reps: "10" },
+            { name: "Assault Bike Sprints", sets: 6, reps: "30 sec" },
+          ],
+        },
+      },
     },
     weight_gain: {
       beginner: {
@@ -77,6 +97,26 @@ const workoutTemplates = {
           ],
         },
       },
+      advanced: {
+        home: {
+          title: "Male Muscle Gain Home Advanced",
+          exercises: [
+            { name: "Weighted Backpack Squats", sets: 6, reps: "12" },
+            { name: "One-Arm Push-Ups", sets: 4, reps: "5 each arm" },
+            { name: "Handstand Push-Ups", sets: 4, reps: "8" },
+            { name: "Weighted Dips", sets: 5, reps: "10" },
+          ],
+        },
+        gym: {
+          title: "Male Muscle Gain Gym Advanced",
+          exercises: [
+            { name: "Heavy Deadlift", sets: 6, reps: "3-5" },
+            { name: "Weighted Dips", sets: 5, reps: "8-10" },
+            { name: "Barbell Rows", sets: 5, reps: "6-8" },
+            { name: "Overhead Press", sets: 5, reps: "5-6" },
+          ],
+        },
+      },
     },
     fitness: {
       beginner: {
@@ -112,6 +152,26 @@ const workoutTemplates = {
             { name: "Farmer's Walk", sets: 4, reps: "40 meters" },
             { name: "Sled Push", sets: 5, reps: "25 meters" },
             { name: "Hanging Knee Raise", sets: 4, reps: "15" },
+          ],
+        },
+      },
+      advanced: {
+        home: {
+          title: "Male Functional Fitness Home Advanced",
+          exercises: [
+            { name: "Burpee Muscle-Ups", sets: 5, reps: "8" },
+            { name: "Pistol Squats", sets: 4, reps: "8 each leg" },
+            { name: "Handstand Walk", sets: 4, reps: "20 steps" },
+            { name: "L-Sit Hold", sets: 4, reps: "30 sec" },
+          ],
+        },
+        gym: {
+          title: "Male Functional Fitness Gym Advanced",
+          exercises: [
+            { name: "Olympic Lifts Complex", sets: 5, reps: "5" },
+            { name: "Weighted Muscle-Ups", sets: 4, reps: "5" },
+            { name: "Heavy Farmer's Walk", sets: 4, reps: "60 meters" },
+            { name: "Rope Climb", sets: 5, reps: "15 feet" },
           ],
         },
       },
@@ -155,6 +215,26 @@ const workoutTemplates = {
           ],
         },
       },
+      advanced: {
+        home: {
+          title: "Female Fat-Loss Home Advanced",
+          exercises: [
+            { name: "Burpee Tuck Jumps", sets: 5, reps: "10" },
+            { name: "Single-Leg Deadlifts", sets: 4, reps: "10 each leg" },
+            { name: "Mountain Climber Twists", sets: 5, reps: "45 sec" },
+            { name: "Plank Up-Downs", sets: 4, reps: "20" },
+          ],
+        },
+        gym: {
+          title: "Female Fat-Loss Gym Advanced",
+          exercises: [
+            { name: "Barbell Hip Thrust", sets: 5, reps: "8-10" },
+            { name: "Bulgarian Split Squats", sets: 4, reps: "12 each leg" },
+            { name: "HIIT Treadmill Sprints", sets: 6, reps: "30 sec" },
+            { name: "Weighted Russian Twists", sets: 4, reps: "30" },
+          ],
+        },
+      },
     },
     weight_gain: {
       beginner: {
@@ -193,6 +273,26 @@ const workoutTemplates = {
           ],
         },
       },
+      advanced: {
+        home: {
+          title: "Female Lean Gain Home Advanced",
+          exercises: [
+            { name: "Weighted Bulgarian Split Squats", sets: 5, reps: "10 each leg" },
+            { name: "Handstand Push-Ups", sets: 4, reps: "6" },
+            { name: "Single-Leg Hip Thrusts", sets: 4, reps: "12 each leg" },
+            { name: "Archer Push-Ups", sets: 4, reps: "6 each arm" },
+          ],
+        },
+        gym: {
+          title: "Female Lean Gain Gym Advanced",
+          exercises: [
+            { name: "Heavy Hip Thrusts", sets: 6, reps: "6-8" },
+            { name: "Sumo Deadlifts", sets: 5, reps: "5-6" },
+            { name: "Weighted Pull-Ups", sets: 4, reps: "6-8" },
+            { name: "Overhead Press", sets: 4, reps: "8-10" },
+          ],
+        },
+      },
     },
     fitness: {
       beginner: {
@@ -228,6 +328,26 @@ const workoutTemplates = {
             { name: "Rower", sets: 5, reps: "2 min" },
             { name: "Kettlebell Deadlift", sets: 4, reps: "12" },
             { name: "Medicine Ball Slams", sets: 4, reps: "12" },
+          ],
+        },
+      },
+      advanced: {
+        home: {
+          title: "Female Fitness Home Advanced",
+          exercises: [
+            { name: "Burpee Box Jumps", sets: 5, reps: "10" },
+            { name: "Pistol Squats", sets: 4, reps: "6 each leg" },
+            { name: "Handstand Hold", sets: 4, reps: "45 sec" },
+            { name: "Single-Arm Plank", sets: 4, reps: "30 sec each arm" },
+          ],
+        },
+        gym: {
+          title: "Female Fitness Gym Advanced",
+          exercises: [
+            { name: "Assault Bike Intervals", sets: 6, reps: "45 sec" },
+            { name: "Weighted Step-Ups", sets: 5, reps: "10 each leg" },
+            { name: "Battle Rope Waves", sets: 5, reps: "60 sec" },
+            { name: "Box Jump Overs", sets: 4, reps: "15" },
           ],
         },
       },

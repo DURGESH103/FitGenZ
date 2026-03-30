@@ -40,15 +40,12 @@ export default function Workout() {
 
   const handleWorkoutComplete = async (workout, completedCount, totalCount) => {
     try {
-      await api.post('/analytics/track', {
-        eventType: 'workout_completion',
-        value: completedCount,
-        metadata: {
-          workoutTitle: workout.title,
-          completedExercises: completedCount,
-          totalExercises: totalCount,
-          completionRate: Math.round((completedCount / totalCount) * 100)
-        }
+      await api.post('/progress', {
+        type: 'workout',
+        workoutTitle: workout.title,
+        completedExercises: completedCount,
+        totalExercises: totalCount,
+        completionRate: Math.round((completedCount / totalCount) * 100)
       })
     } catch {
       toast.error('Failed to log workout')
@@ -61,12 +58,14 @@ export default function Workout() {
 
   return (
     <>
+      {/* Workout Player overlay */}
       <AnimatePresence>
         {playing && (
           <WorkoutPlayer workout={playing} onClose={() => setPlaying(null)} />
         )}
       </AnimatePresence>
 
+      {/* Mobile Filter Sheet */}
       <MobileFilterSheet
         isOpen={showFilters}
         onClose={() => setShowFilters(false)}
@@ -121,12 +120,13 @@ export default function Workout() {
       </MobileFilterSheet>
 
       <div className="p-4 max-w-4xl mx-auto space-y-4 pb-24 md:pb-8">
+        {/* Header */}
         <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
           <h1 className="text-2xl md:text-3xl font-black text-white">Workouts 💪</h1>
           <p className="text-slate-400 text-sm mt-1">Personalized for your goal</p>
         </motion.div>
 
-        {/* Search and Filter Row */}
+        {/* Search and Filter */}
         <div className="flex gap-3">
           <div className="flex-1 relative">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -138,85 +138,17 @@ export default function Workout() {
               className="w-full pl-11 pr-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:border-purple-500/50 transition-colors text-base"
             />
           </div>
-          {/* Mobile Filter Button */}
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowFilters(true)}
-            className="md:hidden px-4 py-3 rounded-2xl bg-white/10 border border-white/10 text-white hover:bg-white/20 transition-colors flex items-center gap-2 shrink-0"
+            className="px-4 py-3 rounded-2xl bg-white/10 border border-white/10 text-white hover:bg-white/20 transition-colors flex items-center gap-2 shrink-0"
           >
             <Filter size={18} />
-          </motion.button>
-          {/* Desktop Filter Toggle */}
-          <motion.button
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowFilters(!showFilters)}
-            className={`hidden md:flex px-4 py-3 rounded-2xl font-medium transition-all items-center gap-2 shrink-0 ${
-              showFilters
-                ? 'bg-purple-600 text-white shadow-lg'
-                : 'bg-white/10 border border-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            <Filter size={18} />
-            Filters
+            <span className="hidden sm:inline">Filters</span>
           </motion.button>
         </div>
 
-        {/* Desktop Filters */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="hidden md:block overflow-hidden"
-            >
-              <div className="glass rounded-2xl p-4 border border-white/10">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div>
-                    <p className="text-sm text-slate-300 mb-3 font-medium">Difficulty Level</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {LEVELS.map((l) => (
-                        <motion.button
-                          key={l}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setLevel(l)}
-                          className={`px-4 py-2.5 rounded-xl text-sm font-medium capitalize transition-all ${
-                            level === l
-                              ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/25'
-                              : 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/10'
-                          }`}
-                        >
-                          {l}
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-300 mb-3 font-medium">Location</p>
-                    <div className="flex gap-2">
-                      {CATEGORIES.map((c) => (
-                        <motion.button
-                          key={c}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setCategory(c)}
-                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                            category === c
-                              ? 'bg-pink-600 text-white shadow-lg shadow-pink-500/25'
-                              : 'bg-white/10 text-slate-300 hover:bg-white/20 border border-white/10'
-                          }`}
-                        >
-                          {c === 'home' ? '🏠 Home' : '🏋️ Gym'}
-                        </motion.button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Active Filters Display */}
+        {/* Active Filters */}
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs text-slate-400">Active filters:</span>
           <span className={`text-xs px-3 py-1.5 rounded-full font-medium ${
@@ -231,6 +163,7 @@ export default function Workout() {
           </span>
         </div>
 
+        {/* Workout List */}
         {loading ? (
           <div className="space-y-4">
             {[1,2,3].map(i => (
